@@ -61,7 +61,6 @@ def update_user(id):
     """ Método para atualizar um usuário no banco de dados """
 
     data = request.get_json()
-    
     response = user_view.update_user(id, data)
 
     return response
@@ -74,6 +73,11 @@ def delete_user(id):
     response = user_view.delete_user(id)
 
     return response
+
+################################################################################
+@app.route('/')
+def home():
+    return render_template('index.html')  
 
 ################################################################################
 if __name__ == '__main__':
