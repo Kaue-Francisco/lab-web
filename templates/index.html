@@ -5,11 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRUD Example</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+        }
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #user-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>CRUD Operations</h1>
-        <h3>Abre o Console para visualizar os resultados</h3>
     </header>
     <main>
         <section id="create">
@@ -22,7 +73,6 @@
                 <button type="submit">Create</button>
             </form>
         </section>
-        
         <section id="read">
             <h2>Read</h2>
             <form id="read-form">
@@ -30,8 +80,8 @@
                 <input type="text" id="read-id" name="id" required>
                 <button type="submit">Read</button>
             </form>
+            <div id="user-list"></div>
         </section>
-        
         <section id="update">
             <h2>Update</h2>
             <form id="update-form">
@@ -39,12 +89,11 @@
                 <input type="text" id="update-id" name="id" required>
                 <label for="update-name">New Name:</label>
                 <input type="text" id="update-name" name="name" required>
-                <label for="update-name">New Age:</label>
+                <label for="update-age">New Age:</label>
                 <input type="number" id="update-age" name="age" required>
                 <button type="submit">Update</button>
             </form>
         </section>
-        
         <section id="delete">
             <h2>Delete</h2>
             <form id="delete-form">
@@ -62,13 +111,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const result = await response.json();
+    
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (error) {
+                    throw new Error('Resposta não é um JSON válido: ' + text);
+                }
+    
+                alert('Operação concluída com sucesso!');
                 console.log(result);
             } catch (error) {
                 console.error('Erro na requisição:', error);
             }
         }
-
+    
         document.getElementById('create-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const data = {
@@ -77,30 +135,69 @@
             };
             sendRequest('/create-user', 'POST', data);
         });
-
+    
         document.getElementById('read-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const id = document.getElementById('read-id').value;
-            
             fetch(`/users/${encodeURIComponent(id)}`, { method: 'GET' })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Erro na requisição:', error));
+            .then(response => {
+                if (response.status === 404) {
+                    alert('ID não existente!');
+                    throw new Error('ID não existente');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Usuário listado com sucesso!');
+                document.getElementById('user-list').innerHTML = `
+                    <p><strong>Nome:</strong> ${data[0]}</p>
+                    <p><strong>Idade:</strong> ${data[1]}</p>
+                `;
+            })
+            .catch(error => console.error('Erro na requisição:', error));
         });
-
+    
         document.getElementById('update-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const id = document.getElementById('update-id').value;
-            const data = { name: document.getElementById('update-name').value, age: parseInt(document.getElementById('update-age').value, 10) };
-            sendRequest(`/users/${encodeURIComponent(id)}`, 'PUT', data);
+            const data = { 
+                name: document.getElementById('update-name').value, 
+                age: parseInt(document.getElementById('update-age').value, 10) 
+            };
+            fetch(`/users/${encodeURIComponent(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.status === 404) {
+                    alert('ID não existente!');
+                    throw new Error('ID não existente');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Usuário atualizado com sucesso!');
+                console.log(data);
+            })
+            .catch(error => console.error('Erro na requisição:', error));
         });
-
+    
         document.getElementById('delete-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const id = document.getElementById('delete-id').value;
             fetch(`/users/${encodeURIComponent(id)}`, { method: 'DELETE' })
-                .then(response => response.json())
-                .then(data => console.log(data))
+                .then(response => {
+                    if (response.status === 404) {
+                        alert('ID não existente!');
+                        throw new Error('ID não existente');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Usuário deletado com sucesso!');
+                    console.log(data);
+                })
                 .catch(error => console.error('Erro na requisição:', error));
         });
     </script>

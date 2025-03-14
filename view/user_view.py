@@ -72,6 +72,12 @@ class UserView:
         cursor = conn.cursor()
         
         try:
+            cursor.execute('SELECT * FROM users WHERE id = ?', (id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({'message': 'User not found'}), 404
+            
             cursor.execute('UPDATE users SET name = ?, age = ? WHERE id = ?', (name, age, id))
             conn.commit()
             conn.close()
@@ -87,6 +93,13 @@ class UserView:
         cursor = conn.cursor()
         
         try:
+
+            cursor.execute('SELECT * FROM users WHERE id = ?', (id,))
+            user = cursor.fetchone()
+
+            if not user:
+                return jsonify({'message': 'User not found'}), 404
+
             cursor.execute('DELETE FROM users WHERE id = ?', (id,))
             conn.commit()
             conn.close()
